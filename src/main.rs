@@ -4,7 +4,7 @@ use aws_sdk_s3::{Client, Error};
 
 /// Lists your DynamoDB tables in the default Region or us-east-1 if a default Region isn't set.
 #[tokio::main]
-async fn main() -> Result<(), Error> {
+async fn main() -> Result<(), std::io::Error> {
     let region_provider = RegionProviderChain::default_provider().or_else("us-east-1");
     //let _region:Region = Region::new("us-east-1");
 
@@ -14,7 +14,8 @@ async fn main() -> Result<(), Error> {
         .await;
     let client = Client::new(&config);
 
-    show_buckets(true, &client, "us-east-1").await?;
+    //show_buckets(false, &client, "us-east-1").await?;
+    upload_file(&client).await?;
 
     Ok(())
 }
@@ -56,5 +57,30 @@ async fn show_buckets(strict: bool, client: &Client, region: &str) -> Result<(),
     Ok(())
 }
 
+async fn upload_file(client:&Client) -> Result<(), std::io::Error> {
+    //let shared_config = aws_config::load_from_env().await;
+    //let client = S3Client::new(&shared_config);
 
+    let bucket_name = "asimbucket1".to_string(); // Use your existing bucket
+    let region_provider = RegionProviderChain::first_try(Region::new("us-east-1")); // Use the "us-east-1" region
+    let region = region_provider.region().await.unwrap();
 
+    let key = "D:\\shoaib_file_aws.txt".to_string(); // Replace with the path to your file
+
+    // Read the file
+    let data = tokio::fs::read(&key).await?;
+
+    // Upload the file
+    let _resp = client.put_object()
+        .bucket(&bucket_name)
+        .key(&key)
+        .body(data.into())
+        .send()
+        .await
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+
+    println!("File uploaded successfully");
+
+    Ok(())
+
+}
