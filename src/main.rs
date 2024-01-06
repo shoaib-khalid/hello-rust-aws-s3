@@ -14,14 +14,15 @@ async fn main() -> Result<(), std::io::Error> {
         .await;
     let client = Client::new(&config);
 
-    //show_buckets(false, &client, "us-east-1").await?;
-    upload_file(&client).await?;
+    show_buckets(false, &client, "us-east-1").await?;
+    //upload_file(&client).await?;
 
     Ok(())
 }
 
-async fn show_buckets(strict: bool, client: &Client, region: &str) -> Result<(), Error> {
-    let resp = client.list_buckets().send().await?;
+async fn show_buckets(strict: bool, client: &Client, region: &str) -> Result<(), std::io::Error> {
+    let resp = client.list_buckets().send().await
+    .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
     let buckets = resp.buckets();
     let num_buckets = buckets.len();
 
@@ -33,7 +34,8 @@ async fn show_buckets(strict: bool, client: &Client, region: &str) -> Result<(),
                 .get_bucket_location()
                 .bucket(bucket.name().unwrap_or_default())
                 .send()
-                .await?;
+                .await
+                .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
 
             if r.location_constraint().unwrap().as_ref() == region {
                 println!("{}", bucket.name().unwrap_or_default());
