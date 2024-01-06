@@ -2,23 +2,51 @@
 // use aws_config::BehaviorVersion;
 // use aws_sdk_s3::{Client, Error};
 
-/// Lists your DynamoDB tables in the default Region or us-east-1 if a default Region isn't set.
+use std::str::FromStr;
+use tokio;
+use s3::bucket::Bucket;
+use s3::creds::Credentials;
+use s3::region::Region;
+
+
 #[tokio::main]
-async fn main() -> Result<(), std::io::Error> {
-    let region_provider = RegionProviderChain::default_provider().or_else("us-east-1");
-    //let _region:Region = Region::new("us-east-1");
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let region = Region::from_str("us-east-1")?;
+    //let credentials = Credentials::new(Some("access_key"), Some("secret_key"), None, None, None)?;
+    let credentials = Credentials::new(None, None, None, None, None)?;
+    let bucket = Bucket::new("bucket-name", region, credentials)?;
 
-    let config = aws_config::defaults(BehaviorVersion::latest())
-        .region(region_provider)
-        .load()
-        .await;
-    let client = Client::new(&config);
+    let results = bucket.list("".to_string(), None).await?;
 
-    //show_buckets(false, &client, "us-east-1").await?;
-    upload_file(&client).await?;
+    for result in results {
+        for object in result.contents {
+            println!("{}", object.key);
+        }
+    }
 
     Ok(())
 }
+
+
+
+
+// /// Lists your DynamoDB tables in the default Region or us-east-1 if a default Region isn't set.
+// #[tokio::main]
+// async fn main() -> Result<(), std::io::Error> {
+//     let region_provider = RegionProviderChain::default_provider().or_else("us-east-1");
+//     //let _region:Region = Region::new("us-east-1");
+
+//     let config = aws_config::defaults(BehaviorVersion::latest())
+//         .region(region_provider)
+//         .load()
+//         .await;
+//     let client = Client::new(&config);
+
+//     //show_buckets(false, &client, "us-east-1").await?;
+//     upload_file(&client).await?;
+
+//     Ok(())
+// }
 
 // async fn show_buckets(strict: bool, client: &Client, region: &str) -> Result<(), Error> {
 //     let resp = client.list_buckets().send().await?;
