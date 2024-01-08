@@ -14,7 +14,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let region = Region::from_str("us-east-1")?;
     //let credentials = Credentials::new(Some("access_key"), Some("secret_key"), None, None, None)?;
     let credentials = Credentials::new(None, None, None, None, None)?;
-    let bucket = Bucket::new("bucket-name", region, credentials)?;
+    let bucket = Bucket::new("asimbucket1", region, credentials)?;
 
     let results = bucket.list("".to_string(), None).await?;
 
